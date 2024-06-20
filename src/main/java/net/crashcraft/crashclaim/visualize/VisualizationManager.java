@@ -157,7 +157,13 @@ public class VisualizationManager {
         getProvider(player.getUniqueId()).spawnClaimVisual(VisualColor.WHITE, group, claim, y - 1).spawn();
 
         for (SubClaim subClaim : subClaims){
-            getProvider(player.getUniqueId()).spawnClaimVisual(null, group, subClaim, y).spawn();
+            if (subClaim.IsVertical()){
+                getProvider(player.getUniqueId()).spawnClaimVisual(null, group, subClaim, subClaim.getMaxY()).spawn();
+            }
+            else{
+                getProvider(player.getUniqueId()).spawnClaimVisual(null, group, subClaim, y).spawn();
+            }
+
         }
     }
 

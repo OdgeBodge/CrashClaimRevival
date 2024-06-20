@@ -1,3 +1,7 @@
+new-vertical-subclaim:
+  min-area: <red>토지의 크기는 최소 5x5x5여야 합니다.
+resize-vertical-subclaim:
+  min-area: <red>토지의 크기는 최소 5x5x5여야 합니다.
 placeholderapi:
   visual-status-shown: 보이기
   visual-status-hidden: 숨기기

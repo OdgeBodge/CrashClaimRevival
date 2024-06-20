@@ -17,6 +17,9 @@ import org.bukkit.HeightMap;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class GlowClaimVisual extends BaseGlowVisual {
     public GlowClaimVisual(VisualColor color, VisualGroup parent, Player player, int y,  BaseClaim claim) {
         super(VisualType.CLAIM, color, parent, player, y, claim);
@@ -25,12 +28,72 @@ public class GlowClaimVisual extends BaseGlowVisual {
     @Override
     public void remove() {
         removeAll();
+    } //for why
+
+    public void spawnVertical(){
+        World world = getPlayer().getWorld();
+
+        int NWCordX = getClaim().getMinX();
+        int NWCordZ = getClaim().getMinZ();
+        int SECordX = getClaim().getMaxX();
+        int SECordZ = getClaim().getMaxZ();
+
+        ArrayList<Integer> heights = new ArrayList<>();
+        heights.add(((SubClaim)getClaim()).getMinY());
+        heights.add(((SubClaim)getClaim()).getMaxY());
+
+        int HeightMod = 1; //ugh
+
+        for (Integer height : heights){
+            spawnEntity(NWCordX, NWCordZ, height);
+            spawnEntity(NWCordX, SECordZ, height);
+            spawnEntity(SECordX, SECordZ, height);
+            spawnEntity(SECordX, NWCordZ, height);
+
+            spawnEntity(NWCordX, NWCordZ, height+HeightMod);
+            spawnEntity(NWCordX, SECordZ, height+HeightMod); //spawn the little sticky up bit
+            spawnEntity(SECordX, SECordZ, height+HeightMod);
+            spawnEntity(SECordX, NWCordZ, height+HeightMod);
+
+            for (Integer integer : VisualUtils.getLine(SECordX - NWCordX)){
+                spawnEntity(NWCordX + integer, NWCordZ, height);
+                spawnEntity(NWCordX + integer, SECordZ, height);
+            }
+
+            for (Integer integer : VisualUtils.getLine(SECordZ - NWCordZ)){
+                spawnEntity(NWCordX, NWCordZ + integer, height);
+                spawnEntity(SECordX, NWCordZ + integer, height);
+            }
+            HeightMod = -1; //disgusting
+        }
+        for (Integer integer : VisualUtils.getLine(heights.get(1) - heights.get(0))){
+                spawnEntity(NWCordX, NWCordZ , heights.get(0)+integer);
+                spawnEntity(SECordX, NWCordZ, heights.get(0)+integer);
+                spawnEntity(NWCordX, SECordZ, heights.get(0)+integer);
+                spawnEntity(SECordX, SECordZ, heights.get(0)+integer);
+
+
+        }
+
+
+
+
+
+
+
+        colorEntities(getParent().getPlayer(), getColor(), getEntityUUIDs());
     }
 
     @Override
     public void spawn() {
-        World world = getPlayer().getWorld();
+        if (getClaim() instanceof SubClaim subClaim){
+            if (subClaim.IsVertical()){
+                spawnVertical();
+                return;
+            }
+        }
 
+        World world = getPlayer().getWorld();
         int NWCordX = getClaim().getMinX();
         int NWCordZ = getClaim().getMinZ();
         int SECordX = getClaim().getMaxX();

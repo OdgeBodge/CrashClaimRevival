@@ -8,6 +8,7 @@ import net.crashcraft.crashclaim.CrashClaim;
 import net.crashcraft.crashclaim.claimobjects.PermState;
 import net.crashcraft.crashclaim.claimobjects.permission.GlobalPermissionSet;
 import net.crashcraft.crashclaim.claimobjects.permission.PlayerPermissionSet;
+import net.crashcraft.crashclaim.commands.claiming.ClickState;
 import net.crashcraft.crashclaim.data.ClaimResponse;
 import net.crashcraft.crashclaim.migration.MigrationAdapter;
 import net.crashcraft.crashclaim.migration.MigrationManager;
@@ -84,7 +85,7 @@ public class GriefPreventionAdaptor implements MigrationAdapter {
 
                 //Children convert to SubClaims
                 for (Claim child : claim.children){
-                    ClaimResponse subClaimResponse = manager.getManager().createSubClaim(cClaim, child.getGreaterBoundaryCorner(), child.getLesserBoundaryCorner(), child.getOwnerID());
+                    ClaimResponse subClaimResponse = manager.getManager().createSubClaim(cClaim, child.getGreaterBoundaryCorner(), child.getLesserBoundaryCorner(), child.getOwnerID(), ClickState.SUB_CLAIM);
 
                     if (!subClaimResponse.isStatus()){
                         logger.warning("A sub-claim has failed to be created due to [" + subClaimResponse.getError().name() + "] : {Owner: " + child.getOwnerName() + "}");

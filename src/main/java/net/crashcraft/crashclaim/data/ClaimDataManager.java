@@ -7,6 +7,8 @@ import net.crashcraft.crashclaim.claimobjects.PermissionGroup;
 import net.crashcraft.crashclaim.claimobjects.SubClaim;
 import net.crashcraft.crashclaim.claimobjects.permission.child.SubPermissionGroup;
 import net.crashcraft.crashclaim.claimobjects.permission.parent.ParentPermissionGroup;
+import net.crashcraft.crashclaim.commands.claiming.ClaimMode;
+import net.crashcraft.crashclaim.commands.claiming.ClickState;
 import net.crashcraft.crashclaim.config.GlobalConfig;
 import net.crashcraft.crashclaim.payment.TransactionResponse;
 import net.crashcraft.crashclaim.payment.TransactionType;
@@ -238,12 +240,17 @@ public class ClaimDataManager implements Listener {
             loadChunksForClaim(claim);
     }
 
-    public ErrorType resizeSubClaim(SubClaim subClaim, int start_x, int start_z, int end_x, int end_z){
+    public ErrorType resizeSubClaim(SubClaim subClaim, int start_x, int start_z, int start_y, int end_x, int end_z, int end_y){
+
+        if (subClaim.IsVertical()){
+            return ResizeVerticalSubclaim(subClaim, start_x, start_z, start_y, end_x, end_z, end_y);
+        }
+
         int[] arr = calculateResize(subClaim.getMinX(), subClaim.getMaxX(),
                 subClaim.getMinZ(), subClaim.getMaxZ(), start_x, start_z, end_x, end_z);
 
         int newMinX = arr[0];
-        int newMinZ = arr[2];
+        int newMinZ = arr[2]; //why
         int newMaxX = arr[1];
         int newMaxZ = arr[3];
 
@@ -254,8 +261,7 @@ public class ClaimDataManager implements Listener {
         for (SubClaim tempClaim : subClaim.getParent().getSubClaims()){
             if (tempClaim.equals(subClaim)){
                 continue;
-            }
-
+            } //no need for a vertical check since this current claim is bedrock to build limit
             if (MathUtils.doOverlap(tempClaim.getMinX(), tempClaim.getMinZ(), tempClaim.getMaxX(), tempClaim.getMaxZ(),
                     newMinX, newMinZ, newMaxX, newMaxZ)){
                 return ErrorType.OVERLAP_EXISTING_SUBCLAIM;
@@ -275,6 +281,62 @@ public class ClaimDataManager implements Listener {
             return ErrorType.CANNOT_FLIP_ON_RESIZE;
         }
     }
+
+    public ErrorType ResizeVerticalSubclaim(SubClaim subClaim, int start_x, int start_z, int start_y, int end_x, int end_z, int end_y){
+        int[] arr = calculateVerticalResize(subClaim.getMinX(), subClaim.getMaxX(), subClaim.getMinZ(), subClaim.getMaxZ(), subClaim.getMinY(),
+                subClaim.getMaxY(), start_x, start_z, start_y, end_x, end_z, end_y);
+
+        int newMinX = arr[0];
+        int newMaxX = arr[1];
+
+        int newMinZ = arr[2];
+        int newMaxZ = arr[3];
+
+        int newMinY = arr[4];
+        int newMaxY = arr[5];
+
+
+        if (isToSmallVertical(newMaxX, newMaxZ, newMaxY, newMinX, newMinZ, newMinY)){
+            return ErrorType.VERTICAL_SUBCLAIM_TOO_SMALL;
+        }
+
+        for (SubClaim tempClaim : subClaim.getParent().getSubClaims()){
+            if (tempClaim.equals(subClaim)){
+                continue;
+            }
+
+            if (tempClaim.IsVertical()){ //already established that subClaim.isVertical == true
+                if (MathUtils.doOverlapCuboid(tempClaim.getMinX(), tempClaim.getMinY(), tempClaim.getMinZ(), tempClaim.getMaxX(),
+                        tempClaim.getMaxY(), tempClaim.getMaxZ(), newMinX, newMinY, newMinZ, newMaxX, newMaxY, newMaxZ)){
+                    return ErrorType.OVERLAP_EXISTING_SUBCLAIM;
+                }
+            }
+            else if (MathUtils.doOverlap(tempClaim.getMinX(), tempClaim.getMinZ(), tempClaim.getMaxX(), tempClaim.getMaxZ(),
+                    newMinX, newMinZ, newMaxX, newMaxZ)){
+                return ErrorType.OVERLAP_EXISTING_SUBCLAIM;
+            }
+        }
+
+        if (arr[6] == 1) {
+            subClaim.setMinCornerX(newMinX);
+            subClaim.setMinCornerZ(newMinZ);
+            subClaim.SetMinCornerY(newMinY);
+
+            subClaim.setMaxCornerX(newMaxX);
+            subClaim.setMaxCornerZ(newMaxZ);
+            subClaim.SetMaxCornerY(newMaxY);
+
+
+
+            subClaim.setEditing(false);
+            return ErrorType.NONE;
+        } else {
+            subClaim.setEditing(false);
+            return ErrorType.CANNOT_FLIP_ON_RESIZE;
+        }
+    }
+
+
 
     private static int[] calculateResize(int min_x, int max_x, int min_z, int max_z, int Start_x, int Start_z, int End_x, int End_z) {
         /*
@@ -341,8 +403,99 @@ public class ClaimDataManager implements Listener {
         return arr;
     }
 
+        private static int[] calculateVerticalResize(int min_x, int max_x, int min_z, int max_z, int min_y, int max_y, int Start_x, int Start_z, int Start_y, int End_x, int End_z, int End_y) {
+        /*
+            Works for any size changes: corners or sides.
+            Note:
+            min_x defines the West Line
+            max_x defines the East Line
+
+            min_z defines the North Line
+            max_z defines the South Line
+
+            NW is now min
+            SE is now max
+         */
+        //i have no idea at all what this is doing however i trust the process
+
+        int newMin_x = min_x;
+        int newMax_x = max_x;
+        int newMax_y = max_y;
+
+        int newMin_z = min_z;
+        int newMax_z = max_z;
+        int newMin_y = min_y;
+
+        int change = 0;
+
+        if (Start_x == min_x) {
+            /*Start is West*/
+            // is now south
+            newMin_x = End_x;
+        }
+
+        if (Start_x == max_x) {
+            /*Start is East*/
+            // is now north
+            newMax_x = End_x;
+        }
+
+        if (Start_z == min_z) {
+            /*Start is North*/
+            //  is now west
+            newMin_z = End_z;
+        }
+
+        if (Start_z == max_z) {
+            /*Start is South*/
+            // is now east
+            newMax_z = End_z;
+        }
+
+        if(Start_y == min_y){
+
+            newMin_y = End_y;
+
+        }
+        if(Start_y == max_y){
+
+            newMax_y = End_y;
+
+        }
+
+        if (newMax_x > min_x && newMin_x < max_x && newMax_z > min_z && newMin_z < max_z && newMax_y > min_y && newMin_y < max_y) {
+            min_x = newMin_x;
+            max_x = newMax_x;
+
+            min_z = newMin_z;
+            max_z = newMax_z;
+
+            min_y = newMin_y;
+            max_y = newMax_y;
+
+            change = 1;
+        }
+
+        int[] arr = new int[7];
+
+        arr[0] = min_x;
+        arr[1] = max_x;
+        arr[2] = min_z;
+        arr[3] = max_z;
+        arr[4] = min_y;
+        arr[5] = max_y;
+
+        arr[6] = change;
+
+        return arr;
+    }
+
     public boolean isTooSmall(int maxX, int maxZ, int minX, int minZ){
         return ((maxX - minX) < 4 || (maxZ - minZ) < 4);
+    }
+
+    public boolean isToSmallVertical(int maxX, int maxZ, int maxY, int minX, int minZ, int minY){
+        return ((maxX - minX) < 4 || (maxZ - minZ) < 4 || (maxY - minY) < 4);
     }
 
     public boolean checkOverLapSurroudningClaims(int claimid, int maxX, int maxZ, int minX, int minZ, UUID world){
@@ -494,7 +647,7 @@ public class ClaimDataManager implements Listener {
         return chunks;
     }
 
-    public ClaimResponse createSubClaim(Claim claim, Location loc1, Location loc2, UUID owner){
+    public ClaimResponse createSubClaim(Claim claim, Location loc1, Location loc2, UUID owner, ClickState mode){
         if (claim.isDeleted()){
             return new ClaimResponse(false, ErrorType.GENERIC);
         }
@@ -507,15 +660,32 @@ public class ClaimDataManager implements Listener {
         Location max = StaticClaimLogic.calculateMaxCorner(loc1, loc2);
         Location min = StaticClaimLogic.calculateMinCorner(loc1, loc2);
 
-        if (isTooSmall(max.getBlockX(), max.getBlockZ(), min.getBlockX(), min.getBlockZ())){
+        if (mode == ClickState.V_SUB_CLAIM){ //force min height to be 5 if it is a vertical subclaim
+            if(Math.abs(max.getBlockY() - min.getBlockY()) < 5 || isTooSmall(max.getBlockX(), max.getBlockZ(), min.getBlockX(), min.getBlockZ())){
+                return new ClaimResponse(false, ErrorType.VERTICAL_SUBCLAIM_TOO_SMALL);
+            }
+        }
+
+        else if (isTooSmall(max.getBlockX(), max.getBlockZ(), min.getBlockX(), min.getBlockZ())){
             return new ClaimResponse(false, ErrorType.TOO_SMALL);
         }
 
+
+
         for (SubClaim subClaim : claim.getSubClaims()){
-            if (MathUtils.doOverlap(subClaim.getMinX(), subClaim.getMinZ(), subClaim.getMaxX(), subClaim.getMaxZ(),
+            if (subClaim.IsVertical() && mode == ClickState.V_SUB_CLAIM){
+                if(MathUtils.doOverlapCuboid(subClaim.getMinX(), subClaim.getMinY(), subClaim.getMinZ(), //vert and vert
+                    subClaim.getMaxX(), subClaim.getMaxY(), subClaim.getMaxZ(),
+                    min.getBlockX(), min.getBlockY(), min.getBlockZ(),
+                    max.getBlockX(), max.getBlockY(), max.getBlockZ())){
+                    return new ClaimResponse(false, ErrorType.OVERLAP_EXISTING_SUBCLAIM);
+                }
+            }
+            else if (MathUtils.doOverlap(subClaim.getMinX(), subClaim.getMinZ(), subClaim.getMaxX(), subClaim.getMaxZ(), //vert and no vert or no vert and no vert
                     min.getBlockX(), min.getBlockZ(), max.getBlockX(), max.getBlockZ())){
                 return new ClaimResponse(false, ErrorType.OVERLAP_EXISTING_SUBCLAIM);
             }
+
         }
 
         World world = loc1.getWorld();
@@ -524,14 +694,33 @@ public class ClaimDataManager implements Listener {
             return new ClaimResponse(false, ErrorType.GENERIC);
         }
 
-        SubClaim subClaim = new SubClaim(claim,
-                requestUniqueID(),
-                max.getBlockX(),
-                max.getBlockZ(),
-                min.getBlockX(),
-                min.getBlockZ(),
-                loc1.getWorld().getUID(),
-                new SubPermissionGroup(null, null, null));
+
+        SubClaim subClaim;
+        if (mode == ClickState.SUB_CLAIM){
+            subClaim = new SubClaim(claim,
+            requestUniqueID(),
+            max.getBlockX(),
+            max.getBlockZ(),
+            min.getBlockX(),
+            min.getBlockZ(),
+            loc1.getWorld().getUID(),
+            new SubPermissionGroup(null, null, null));
+        }
+        else{ //may as well be if mode == ClickState.V_SUB_CLAIM
+            subClaim = new SubClaim(claim,
+            requestUniqueID(),
+            max.getBlockX(),
+            max.getBlockZ(),
+            min.getBlockX(),
+            min.getBlockZ(),
+
+            min.getBlockY(),
+            max.getBlockY(),
+
+            loc1.getWorld().getUID(),
+            new SubPermissionGroup(null, null, null));
+        }
+
 
         PermissionGroup permissionGroup = subClaim.getPerms();
 

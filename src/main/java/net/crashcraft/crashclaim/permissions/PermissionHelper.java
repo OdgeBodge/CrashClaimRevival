@@ -87,7 +87,7 @@ public class PermissionHelper {
         if (claim == null){
             return true;
         } else {
-            return claim.hasPermission(player, location, route);
+            return claim.hasPermission(player, location, route); //here
         }
     }
 

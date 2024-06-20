@@ -35,6 +35,7 @@ import org.bukkit.event.block.BlockPistonExtendEvent;
 import org.bukkit.event.block.BlockPistonRetractEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityPlaceEvent;
 import org.bukkit.event.entity.PotionSplashEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.hanging.HangingBreakByEntityEvent;
@@ -98,24 +99,6 @@ public class PlayerListener implements Listener {
         }
     }
 
-    //@EventHandler
-    //public void onProjectileThrow(ProjectileLaunchEvent e){
-        //return;
-
-        //if (GlobalConfig.disabled_worlds.contains(e.getEntity().getWorld().getUID())){
-            //return;
-        //}
-
-        //if (e.getEntity().getType().name().equals("FIREWORK") || e.getEntity().getType().name().equals("FIREWORK_ROCKET")) {
-            //allow them to throw fireworks, uses both as strings because compiler wants FIREWORK_ROCKET, but server wants FIREWORK
-            //return;
-        //}
-
-        //if (e.getEntity().getShooter() instanceof Player player && !helper.hasPermission(player.getUniqueId(), player.getLocation(), PermissionRoute.ENTITIES)){
-            //e.setCancelled(true);
-            //visuals.sendAlert(player, Localization.ALERT__NO_PERMISSIONS__ENTITIES.getMessage(player));
-        //}
-    //}
 
     @EventHandler (priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onPlayerJoinEvent(PlayerJoinEvent e){
@@ -143,6 +126,19 @@ public class PlayerListener implements Listener {
     }
 
     @EventHandler (priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void EntityPlaceEvent(EntityPlaceEvent e){
+        if (e.getPlayer() == null){
+            return;
+        }
+
+        if(!helper.hasPermission(e.getPlayer().getUniqueId(), e.getEntity().getLocation(), PermissionRoute.BUILD)){
+            e.setCancelled(true);
+            visuals.sendAlert(e.getPlayer(), Localization.ALERT__NO_PERMISSIONS__BUILD.getMessage(e.getPlayer()));
+        }
+    }
+
+
+    @EventHandler (priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onPlayerInteractEvent(PlayerInteractEvent e){
         if (e.getClickedBlock() == null)
             return;
@@ -160,7 +156,7 @@ public class PlayerListener implements Listener {
 
         //add some exceptions to the interaction flag and put them under build instead
 
-        List<Material> InteractExceptions = Arrays.asList(Material.REPEATER, Material.COMPARATOR, Material.ARMOR_STAND);
+        List<Material> InteractExceptions = Arrays.asList(Material.REPEATER, Material.COMPARATOR, Material.ARMOR_STAND, Material.END_CRYSTAL);
         if (e.getClickedBlock().getState() instanceof Sign || InteractExceptions.contains(e.getClickedBlock().getType())){
             if (!helper.hasPermission(player.getUniqueId(), location, PermissionRoute.BUILD)){
                 e.setCancelled(true);
@@ -173,29 +169,13 @@ public class PlayerListener implements Listener {
         }
 
         if (e.getClickedBlock().getState() instanceof BlockInventoryHolder){
-            if (helper.hasPermission(player.getUniqueId(), location, e.getClickedBlock().getType())){
+            if (!helper.hasPermission(player.getUniqueId(), location, PermissionRoute.CONTAINERS)){
+                e.setCancelled(true);
+                visuals.sendAlert(player, Localization.ALERT__NO_PERMISSIONS__CONTAINERS.getMessage(player));
                 return;
             }
-
-            e.setCancelled(true);
-            visuals.sendAlert(player, Localization.ALERT__NO_PERMISSIONS__CONTAINERS.getMessage(player));
             return;
         }
-
-
-        ItemStack MainHandItem = e.getPlayer().getInventory().getItemInMainHand();
-        ItemStack OffHandItem = e.getPlayer().getInventory().getItemInOffHand();
-
-        if (MainHandItem.getType().equals(Material.ARMOR_STAND) || OffHandItem.getType().equals(Material.ARMOR_STAND)){
-            if (!helper.hasPermission(player.getUniqueId(), location, PermissionRoute.BUILD)) {
-                e.setCancelled(true); //prevent users from placing armour stands with no build perms
-                visuals.sendAlert(player, Localization.ALERT__NO_PERMISSIONS__BUILD.getMessage(player));
-                return;
-            }
-        }
-
-
-
 
 
         if (e.getAction().equals(Action.RIGHT_CLICK_BLOCK) && e.getItem() != null && perms.getHeldItemInteraction().contains(e.getItem().getType())) {
@@ -371,12 +351,14 @@ public class PlayerListener implements Listener {
     public void onPlayerMoveEvent(PlayerMoveEvent e){
         final int fromX = e.getFrom().getBlockX();
         final int fromZ = e.getFrom().getBlockZ();
+        final int fromY = e.getFrom().getBlockY();
         final int toX = e.getTo().getBlockX();
         final int toZ = e.getTo().getBlockZ();
+        final int toY = e.getTo().getBlockY();
         final UUID world = e.getTo().getWorld().getUID();
         final Player player = e.getPlayer();
 
-        if((GlobalConfig.checkEntryExitWhileFlying || (!player.isGliding() && !player.isFlying())) && (fromX != toX || fromZ != toZ)) {
+        if((GlobalConfig.checkEntryExitWhileFlying || (!player.isGliding() && !player.isFlying())) && (fromX != toX || fromZ != toZ || fromY != toY)) {
             if (GlobalConfig.disabled_worlds.contains(world)){
                 return;
             }
@@ -397,12 +379,12 @@ public class PlayerListener implements Listener {
             BaseClaim from = null;
 
             if (toClaim != null) {
-                SubClaim toSubClaim = toClaim.getSubClaim(toX, toZ);
+                SubClaim toSubClaim = toClaim.getSubClaim(toX, toZ, toY);
                 to = check(toClaim, toSubClaim);
             }
 
             if (fromClaim != null) {
-                SubClaim fromSubClaim = fromClaim.getSubClaim(fromX, fromZ);
+                SubClaim fromSubClaim = fromClaim.getSubClaim(fromX, fromZ, fromY);
                 from = check(fromClaim, fromSubClaim);
             }
 
@@ -489,8 +471,8 @@ public class PlayerListener implements Listener {
             }
             return;
         }
-        List<EntityType> DamageExceptions = Arrays.asList(EntityType.ITEM_FRAME, EntityType.GLOW_ITEM_FRAME, EntityType.ARMOR_STAND);
 
+        List<EntityType> DamageExceptions = Arrays.asList(EntityType.ARMOR_STAND, EntityType.ENDER_CRYSTAL, EntityType.LEASH_HITCH, EntityType.ITEM_FRAME, EntityType.GLOW_ITEM_FRAME, EntityType.PAINTING);
         if (e.getDamager() instanceof Projectile arrow){
             Location location = arrow.getLocation();
             if (arrow.getShooter() instanceof Player player){
@@ -500,7 +482,7 @@ public class PlayerListener implements Listener {
                         visuals.sendAlert(player, Localization.ALERT__NO_PERMISSIONS__BUILD.getMessage(player));
                     }
                 }
-                if (!helper.hasPermission(player.getUniqueId(), location, PermissionRoute.ENTITIES)){
+                else if (!helper.hasPermission(player.getUniqueId(), location, PermissionRoute.ENTITIES)){
                     e.setCancelled(true);
                     visuals.sendAlert(player, Localization.ALERT__NO_PERMISSIONS__ENTITIES.getMessage(player));
                 }
@@ -542,14 +524,17 @@ public class PlayerListener implements Listener {
             }
         } else if (event.getCause() == HangingBreakEvent.RemoveCause.ENTITY){
             if (event.getRemover() instanceof Player player){
-                if (!helper.hasPermission(player.getUniqueId(), event.getEntity().getLocation(), PermissionRoute.ENTITIES)){
+                if (!helper.hasPermission(player.getUniqueId(), event.getEntity().getLocation(), PermissionRoute.BUILD)){
                     event.setCancelled(true);
+                    visuals.sendAlert(player, Localization.ALERT__NO_PERMISSIONS__BUILD.getMessage(player));
+                    return;
                 }
 
                 return; // Stop its a player!
             } else if (event.getRemover() instanceof Arrow arrow){
-                if (arrow.getShooter() instanceof Player player && !helper.hasPermission(player.getUniqueId(), event.getEntity().getLocation(), PermissionRoute.ENTITIES)){
+                if (arrow.getShooter() instanceof Player player && !helper.hasPermission(player.getUniqueId(), event.getEntity().getLocation(), PermissionRoute.BUILD)){
                     event.setCancelled(true);
+                    visuals.sendAlert(player, Localization.ALERT__NO_PERMISSIONS__BUILD.getMessage(player));
                     return;
                 }
             }
@@ -629,9 +614,9 @@ public class PlayerListener implements Listener {
 
         if (e.getAttacker() instanceof Player) {
             Player player = (Player) e.getAttacker();
-            if (!helper.hasPermission(player.getUniqueId(), e.getVehicle().getLocation(), PermissionRoute.ENTITIES)){
+            if (!helper.hasPermission(player.getUniqueId(), e.getVehicle().getLocation(), PermissionRoute.BUILD)){
                 e.setCancelled(true);
-                visuals.sendAlert(player, Localization.ALERT__NO_PERMISSIONS__ENTITIES.getMessage(player));
+                visuals.sendAlert(player, Localization.ALERT__NO_PERMISSIONS__BUILD.getMessage(player));
             }
         } else if (e.getAttacker() instanceof TNTPrimed){
             if (!helper.hasPermission(e.getAttacker().getLocation(), PermissionRoute.EXPLOSIONS)){
@@ -653,10 +638,24 @@ public class PlayerListener implements Listener {
             return;
         }
 
+        List<EntityType> EntityItemContainers = Arrays.asList(
+                EntityType.MINECART_CHEST,
+                EntityType.CHEST_BOAT,
+                EntityType.MINECART_HOPPER,
+                EntityType.MINECART_FURNACE
+        );
+
         if (e.getRightClicked().getType().equals(EntityType.ITEM_FRAME) || e.getRightClicked().getType().equals(EntityType.GLOW_ITEM_FRAME)){
             if (!helper.hasPermission(player.getUniqueId(), e.getRightClicked().getLocation(), PermissionRoute.INTERACTIONS)){
                 e.setCancelled(true);
                 visuals.sendAlert(player, Localization.ALERT__NO_PERMISSIONS__INTERACTION.getMessage(player));
+            }
+        }
+
+        else if(EntityItemContainers.contains(e.getRightClicked().getType())){
+            if (!helper.hasPermission(player.getUniqueId(), e.getRightClicked().getLocation(), PermissionRoute.CONTAINERS)){
+                e.setCancelled(true);
+                visuals.sendAlert(player, Localization.ALERT__NO_PERMISSIONS__CONTAINERS.getMessage(player));
             }
         }
 

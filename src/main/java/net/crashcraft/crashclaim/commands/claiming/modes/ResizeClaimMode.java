@@ -25,6 +25,7 @@ public class ResizeClaimMode implements ClaimMode {
     private final Claim claim;
     private final VisualizationManager visualizationManager;
     private final ClaimDataManager manager;
+    private ErrorType error;
 
     public ResizeClaimMode(ClaimCommand commandManager, Player player, Claim claim, Location firstLocation){
         this.commandManager = commandManager;

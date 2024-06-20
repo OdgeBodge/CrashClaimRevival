@@ -77,6 +77,7 @@ public class DatabaseManager {
         registerDataVersion(new DataRev2());
         registerDataVersion(new DataRev3());
         registerDataVersion(new DataRev4());
+        registerDataVersion(new DataRev5());
     }
 
     private void validateDataVersions(){

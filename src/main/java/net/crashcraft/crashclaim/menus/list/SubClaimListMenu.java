@@ -54,8 +54,20 @@ public class SubClaimListMenu extends GUI {
             pageItemsDisplay.put(slot, item);
 
             ItemStack descItem;
-
-            if (item.getParent().getOwner().equals(getPlayer().getUniqueId())) {
+            if (item.IsVertical()){
+                descItem = Localization.MENU__GENERAL__VERTICAL_SUBCLAIM.getItem(player,
+                    "name", item.getName(),
+                    "min_x", Integer.toString(item.getMinX()),
+                    "min_z", Integer.toString(item.getMinZ()),
+                    "min_y", Integer.toString(item.getMinY()),
+                    "max_x", Integer.toString(item.getMaxX()),
+                    "max_z", Integer.toString(item.getMaxZ()),
+                    "max_y", Integer.toString(item.getMaxY()),
+                    "world", Bukkit.getWorld(item.getWorld()).getName()
+                );
+                descItem.setType(Material.OAK_FENCE_GATE);
+            }
+            else if (item.getParent().getOwner().equals(getPlayer().getUniqueId())) {
                 descItem = Localization.MENU__GENERAL__CLAIM_ITEM_NO_OWNER.getItem(player,
                         "name", item.getName(),
                         "min_x", Integer.toString(item.getMinX()),
@@ -64,8 +76,10 @@ public class SubClaimListMenu extends GUI {
                         "max_z", Integer.toString(item.getMaxZ()),
                         "world", Bukkit.getWorld(item.getWorld()).getName()
                 );
-            } else {
-                descItem = Localization.MENU__GENERAL__CLAIM_ITEM.getItem(player,
+                descItem.setType(GlobalConfig.visual_menu_items.getOrDefault(item.getWorld(), Material.OAK_FENCE));
+            }
+            else {
+                descItem = Localization.MENU__GENERAL__CLAIM_ITEM.getItem(player, //im not sure in what case this would be used?
                         "name", item.getName(),
                         "min_x", Integer.toString(item.getMinX()),
                         "min_z", Integer.toString(item.getMinZ()),
@@ -74,9 +88,10 @@ public class SubClaimListMenu extends GUI {
                         "world", Bukkit.getWorld(item.getWorld()).getName(),
                         "owner", Bukkit.getOfflinePlayer(item.getParent().getOwner()).getName()
                 );
+                descItem.setType(GlobalConfig.visual_menu_items.getOrDefault(item.getWorld(), Material.OAK_FENCE));
             }
 
-            descItem.setType(GlobalConfig.visual_menu_items.getOrDefault(item.getWorld(), Material.OAK_FENCE));
+
 
             inv.setItem(slot, descItem);
 

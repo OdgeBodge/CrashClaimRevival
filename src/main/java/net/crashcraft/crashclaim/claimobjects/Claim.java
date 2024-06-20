@@ -36,7 +36,7 @@ public class Claim extends BaseClaim {
         return getActivePermission(uuid, location, route) == PermState.ENABLED;
     }
 
-    public boolean hasPermission(UUID uuid, Location location, Material material){
+    public boolean hasPermission(UUID uuid, Location location, Material material){ //here
         return getActivePermission(uuid, location, material) == PermState.ENABLED;
     }
 
@@ -47,10 +47,16 @@ public class Claim extends BaseClaim {
     public boolean hasPermission(Location location, Material material){
         return getActivePermission(location, material) == PermState.ENABLED;
     }
-
-    public SubClaim getSubClaim(int x, int z){
+    //find if a point is in a subclaim
+    public SubClaim getSubClaim(int x, int z, int y){
         for (SubClaim subClaim : subClaims) {
-            if (MathUtils.iskPointCollide(subClaim.getMinX(), subClaim.getMinZ(), subClaim.getMaxX(),
+            if (subClaim.IsVertical()){
+                if (MathUtils.isk3DPointCollide(subClaim.getMinX(), subClaim.getMinZ(), subClaim.getMaxX(),
+                    subClaim.getMaxZ(), subClaim.getMinY(), subClaim.getMaxY(), x, z, y)){
+                    return subClaim;
+                }
+            }
+            else if (MathUtils.iskPointCollide(subClaim.getMinX(), subClaim.getMinZ(), subClaim.getMaxX(),
                     subClaim.getMaxZ(), x, z)) {
                 return subClaim;
             }
@@ -60,7 +66,7 @@ public class Claim extends BaseClaim {
 
     private int getActivePermission(Location location, PermissionRoute route){
         if (location != null && subClaims.size() > 0){
-            SubClaim subClaim = getSubClaim(location.getBlockX(), location.getBlockZ());
+            SubClaim subClaim = getSubClaim(location.getBlockX(), location.getBlockZ(), location.getBlockY());
             if (subClaim != null){
                 return PermissionRouter.getLayeredPermission(this, subClaim, route);
             }
@@ -71,8 +77,8 @@ public class Claim extends BaseClaim {
     }
 
     private int getActivePermission(Location location, Material material){
-        if (location != null && subClaims.size() > 0){
-            SubClaim subClaim = getSubClaim(location.getBlockX(), location.getBlockZ());
+        if (location != null && subClaims.size() > 0){ //this one
+            SubClaim subClaim = getSubClaim(location.getBlockX(), location.getBlockZ(), location.getBlockY());
             if (subClaim != null){
                 return PermissionRouter.getLayeredPermission(this, subClaim, material);
             }
@@ -86,8 +92,8 @@ public class Claim extends BaseClaim {
         if (uuid.equals(owner))
             return PermState.ENABLED;
 
-        if (location != null && subClaims.size() > 0){
-            SubClaim subClaim = getSubClaim(location.getBlockX(), location.getBlockZ());
+        if (location != null && subClaims.size() > 0){ //important!
+            SubClaim subClaim = getSubClaim(location.getBlockX(), location.getBlockZ(), location.getBlockY());
             if (subClaim != null){
                 return PermissionRouter.getLayeredPermission(this, subClaim, uuid, route);
             } else {
@@ -99,15 +105,15 @@ public class Claim extends BaseClaim {
     }
 
     private int getActivePermission(UUID uuid, Location location, Material material){   //should only be executed with a location inside the claim
-        if (uuid.equals(owner))
+        if (uuid.equals(owner)) //here
             return PermState.ENABLED;
 
         if (location != null && subClaims.size() > 0){
-            SubClaim subClaim = getSubClaim(location.getBlockX(), location.getBlockZ());
+            SubClaim subClaim = getSubClaim(location.getBlockX(), location.getBlockZ(), location.getBlockY());
             if (subClaim != null){
                 return PermissionRouter.getLayeredContainer(this, subClaim, uuid, material);
             } else {
-                return PermissionRouter.getLayeredContainer(this, null, uuid, material);
+                return PermissionRouter.getLayeredContainer(this, null, uuid, material); //here
             }
         } else {
             return PermissionRouter.getLayeredContainer(this, null, uuid, material);

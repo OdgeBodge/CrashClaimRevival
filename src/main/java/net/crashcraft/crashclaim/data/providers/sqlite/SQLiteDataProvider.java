@@ -27,13 +27,10 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.world.WorldInitEvent;
 
 import java.io.File;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 public class SQLiteDataProvider implements DataProvider {
     private BiMap<Material, Integer> containerIDMap;
@@ -112,6 +109,7 @@ public class SQLiteDataProvider implements DataProvider {
                 //ValueConfig check to make sure no dinky plugins loaded worlds
                 if (!GlobalConfig.visual_menu_items.containsKey(world)){
                     GlobalConfig.visual_menu_items.put(world, Material.OAK_FENCE);
+                    GlobalConfig.visual_menu_items.put(world, Material.OAK_FENCE_GATE);
                 }
             }
         } catch (SQLException e){
@@ -216,8 +214,10 @@ public class SQLiteDataProvider implements DataProvider {
                     claimData_id,
                     claim.getMinX(),
                     claim.getMinZ(),
+                    -500,
                     claim.getMaxX(),
                     claim.getMaxZ(),
+                    -500,
                     claim.getWorld(),
                     claim.getName(),
                     claim.getEntryMessage(),
@@ -247,13 +247,14 @@ public class SQLiteDataProvider implements DataProvider {
                 if (subClaimData_id == null){
                     subClaimData_id = -1;
                 }
-
                 addClaimData(
                         subClaimData_id,
                         subClaim.getMinX(),
                         subClaim.getMinZ(),
+                        subClaim.getMinY(),
                         subClaim.getMaxX(),
                         subClaim.getMaxZ(),
+                        subClaim.getMaxY(),
                         subClaim.getWorld(),
                         subClaim.getName(),
                         subClaim.getEntryMessage(),
@@ -261,11 +262,16 @@ public class SQLiteDataProvider implements DataProvider {
                         DataType.SUB_CLAIM
                 );
 
+
+                int MinY = subClaim.getMinY();
+                int MaxY = subClaim.getMaxY();
+
+
                 DB.executeUpdate("INSERT OR IGNORE INTO subclaims(id, data, claim_id) VALUES (?, " +
-                                "(SELECT id FROM claim_data WHERE minX = ? AND minZ = ? AND maxX = ? AND maxZ = ? AND world = (SELECT id FROM claimworlds WHERE uuid = ?))," +
+                                "(SELECT id FROM claim_data WHERE minX = ? AND minZ = ? AND maxX = ? AND maxZ = ? AND world = (SELECT id FROM claimworlds WHERE uuid = ?) AND minY = ? and maxY = ?)," +
                                 "?)",
                         subClaim.getId(),
-                        subClaim.getMinX(), subClaim.getMinZ(), subClaim.getMaxX(), subClaim.getMaxZ(), subClaim.getWorld().toString(),
+                        subClaim.getMinX(), subClaim.getMinZ(), subClaim.getMaxX(), subClaim.getMaxZ(), subClaim.getWorld().toString(), MinY, MaxY,
                         subClaim.getParent().getId()
                 );
 
@@ -393,17 +399,16 @@ public class SQLiteDataProvider implements DataProvider {
         );
     }
 
-    private void addClaimData(int data_id, int minX, int minZ, int maxX, int maxZ, UUID world, String name, String entryMessage, String exitMessage, DataType type) throws SQLException{
+    private void addClaimData(int data_id, int minX, int minZ, int minY, int maxX, int maxZ, int maxY, UUID world, String name, String entryMessage, String exitMessage, DataType type) throws SQLException{
         if (data_id == -1) {
-            DB.executeUpdate("INSERT INTO claim_data(minX, minZ, maxX, maxZ, world, name, entryMessage, exitMessage, `type`) VALUES (?, ?, ?, ?, (SELECT id FROM claimworlds WHERE uuid = ?), ?, ?, ?, ?)",
-                    minX, minZ, maxX, maxZ, world.toString(), name, entryMessage, exitMessage, type.getType()
-            );
-        } else {
-            DB.executeUpdate("INSERT INTO claim_data(id, minX, minZ, maxX, maxZ, world, name, entryMessage, exitMessage, `type`) VALUES (?, ?, ?, ?, ?, (SELECT id FROM claimworlds WHERE uuid = ?), ?, ?, ?, ?)" +
-                            "ON CONFLICT(id) DO UPDATE SET minX = ?, minZ = ?, maxX = ?, maxZ = ?, world = (SELECT id FROM claimworlds WHERE uuid = ?), name = ?, entryMessage = ?, exitMessage = ?",
-                    data_id, minX, minZ, maxX, maxZ, world.toString(), name, entryMessage, exitMessage, type.getType(),
-                    minX, minZ, maxX, maxZ, world.toString(), name, entryMessage, exitMessage
-            );
+            DB.executeUpdate("INSERT INTO claim_data(minX, minZ, maxX, maxZ, world, name, entryMessage, exitMessage, `type`, maxY, minY) VALUES (?, ?, ?, ?, (SELECT id FROM claimworlds WHERE uuid = ?), ?, ?, ?, ?, ?, ?)",
+                minX, minZ, maxX, maxZ, world.toString(), name, entryMessage, exitMessage, type.getType(), maxY, minY);
+        }
+        else {
+            DB.executeUpdate("INSERT INTO claim_data(id, minX, minZ, maxX, maxZ, world, name, entryMessage, exitMessage, `type`, maxY, minY) VALUES (?, ?, ?, ?, ?, (SELECT id FROM claimworlds WHERE uuid = ?), ?, ?, ?, ?, ?, ?)" +
+            "ON CONFLICT(id) DO UPDATE SET minX = ?, minZ = ?, maxX = ?, maxZ = ?, world = (SELECT id FROM claimworlds WHERE uuid = ?), name = ?, entryMessage = ?, exitMessage = ?, maxY = ?, minY = ?",
+            data_id, minX, minZ, maxX, maxZ, world.toString(), name, entryMessage, exitMessage, type.getType(), maxY, minY,
+            minX, minZ, maxX, maxZ, world.toString(), name, entryMessage, exitMessage, maxY, minY);
         }
     }
 
@@ -494,7 +499,9 @@ public class SQLiteDataProvider implements DataProvider {
                     "    claim_data.name," +
                     "    claim_data.entryMessage," +
                     "    claim_data.exitMessage," +
-                    "    subclaims.id As subClaim_id " +
+                    "    subclaims.id As subClaim_id," +
+                    "    claim_data.maxY," +
+                    "    claim_data.minY " +
                     "From" +
                     "    claim_data Inner Join" +
                     "    subclaims On claim_data.id = subclaims.data " +
@@ -509,15 +516,21 @@ public class SQLiteDataProvider implements DataProvider {
                         getPlayerPermissions(subClaimData_id)
                 );
 
-                SubClaim subClaim = new SubClaim(claim,
-                        row.getInt("subClaim_id"),
-                        row.getInt("maxX"),
-                        row.getInt("maxZ"),
-                        row.getInt("minX"),
-                        row.getInt("minZ"),
-                        world,
-                        subClaim_group
-                );
+
+                SubClaim subClaim;
+                int minY = row.getInt("minY");
+                int maxY = row.getInt("maxY");
+                subClaim = new SubClaim(claim,
+                    row.getInt("subClaim_id"),
+                    row.getInt("maxX"),
+                    row.getInt("maxZ"),
+                    row.getInt("minX"),
+                    row.getInt("minZ"),
+                    maxY,
+                    minY,
+                    world,
+                    subClaim_group);
+
 
                 subClaim.setName(row.getString("name"));
                 subClaim.setEntryMessage(row.getString("entryMessage"));

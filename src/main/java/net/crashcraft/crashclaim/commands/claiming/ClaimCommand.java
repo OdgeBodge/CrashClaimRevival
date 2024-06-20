@@ -120,6 +120,52 @@ public class ClaimCommand extends BaseCommand implements Listener {
         }
     }
 
+    @CommandAlias("verticalsubclaim|vsubclaim")
+    @CommandPermission("crashclaim.user.verticalsubclaim")
+    public void verticalSubclaim(Player player){
+        UUID uuid = player.getUniqueId();
+
+        if (GlobalConfig.disabled_worlds.contains(player.getWorld().getUID())){
+            player.sendMessage(Localization.DISABLED_WORLD.getMessage(player));
+            forceCleanup(uuid, true);
+            return;
+        }
+
+        if (modeMap.containsKey(uuid)) {
+            forceCleanup(uuid, true);
+
+            visualizationManager.sendAlert(player, Localization.SUBCLAIM__DISABLED.getMessage(player));
+        } else {
+            forceCleanup(uuid, true);
+            Location location = player.getLocation();
+
+            Claim claim = dataManager.getClaim(location.getBlockX(), location.getBlockZ(), player.getWorld().getUID());
+            if (claim == null) {
+                player.spigot().sendMessage(Localization.SUBCLAIM__NO_CLAIM.getMessage(player));
+                return;
+            }
+
+            if (!PermissionHelper.getPermissionHelper().hasPermission(claim, uuid, PermissionRoute.MODIFY_CLAIM)) {
+                player.spigot().sendMessage(Localization.SUBCLAIM__NO_PERMISSION.getMessage(player));
+                return;
+            }
+
+            if (claim.isEditing()){
+                player.spigot().sendMessage(Localization.SUBCLAIM__ALREADY_RESIZING.getMessage(player));
+                return;
+            }
+
+            claimMap.put(uuid, claim);
+            modeMap.put(uuid, ClickState.V_SUB_CLAIM);
+
+            claim.setEditing(true);
+            visualizationManager.visualizeSurroundingSubClaims(claim, player);
+
+            visualizationManager.sendAlert(player, Localization.SUBCLAIM__ENABLED.getMessage(player));
+            player.spigot().sendMessage(Localization.NEW_SUBCLAIM__INFO.getMessage(player));
+        }
+    }
+
     @EventHandler
     public void onClick(PlayerInteractEvent e){
         if (e.getHand() == null
@@ -180,13 +226,13 @@ public class ClaimCommand extends BaseCommand implements Listener {
                         stateMap.put(uuid, new ResizeClaimMode(this, player, claim, location));
                     }
                 }
-                case SUB_CLAIM -> {
+                case SUB_CLAIM, V_SUB_CLAIM -> {
                     Claim parent = claimMap.get(uuid);
                     if (parent == null) {
                         return;
                     }
                     parent.setEditing(true);
-                    SubClaim subClaim = parent.getSubClaim(location.getBlockX(), location.getBlockZ());
+                    SubClaim subClaim = parent.getSubClaim(location.getBlockX(), location.getBlockZ(), location.getBlockY());
                     if (subClaim != null) {
                         if (!PermissionHelper.getPermissionHelper().hasPermission(subClaim, uuid, PermissionRoute.MODIFY_CLAIM)) {
                             player.spigot().sendMessage(Localization.SUBCLAIM__NO_PERMISSION.getMessage(player));
@@ -196,7 +242,7 @@ public class ClaimCommand extends BaseCommand implements Listener {
                         stateMap.put(uuid, new ResizeSubClaimMode(this, player, parent, subClaim, location));
                         return;
                     }
-                    stateMap.put(uuid, new NewSubClaimMode(this, player, parent, location));
+                    stateMap.put(uuid, new NewSubClaimMode(this, player, parent, location, state));
                 }
             }
         }

@@ -3,6 +3,7 @@ package net.crashcraft.crashclaim.commands.claiming.modes;
 import net.crashcraft.crashclaim.claimobjects.Claim;
 import net.crashcraft.crashclaim.commands.claiming.ClaimCommand;
 import net.crashcraft.crashclaim.commands.claiming.ClaimMode;
+import net.crashcraft.crashclaim.commands.claiming.ClickState;
 import net.crashcraft.crashclaim.data.ClaimDataManager;
 import net.crashcraft.crashclaim.data.ClaimResponse;
 import net.crashcraft.crashclaim.data.MathUtils;
@@ -23,13 +24,15 @@ public class NewSubClaimMode implements ClaimMode {
     private final VisualizationManager visualizationManager;
     private final ClaimDataManager manager;
     private final Claim claim;
+    private final ClickState mode;
 
-    public NewSubClaimMode(ClaimCommand commandManager, Player player, Claim claim, Location firstLocation) {
+    public NewSubClaimMode(ClaimCommand commandManager, Player player, Claim claim, Location firstLocation, ClickState Mode) {
         this.commandManager = commandManager;
         this.claim = claim;
         this.firstLocation = firstLocation;
         this.visualizationManager = commandManager.getVisualizationManager();
         this.manager = commandManager.getDataManager();
+        this.mode = Mode;
 
         VisualGroup group = visualizationManager.fetchVisualGroup(player, true);
         group.removeAllVisualsOfType(VisualType.MARKER);
@@ -48,7 +51,8 @@ public class NewSubClaimMode implements ClaimMode {
             return;
         }
 
-        ClaimResponse response = manager.createSubClaim(claim, firstLocation, click, player.getUniqueId());
+
+        ClaimResponse response = manager.createSubClaim(claim, firstLocation, click, player.getUniqueId(), this.mode); //CREATING SUBCLAIM
 
         if (response.isStatus()){
             VisualGroup group = visualizationManager.fetchVisualGroup(player, true);
@@ -77,6 +81,9 @@ public class NewSubClaimMode implements ClaimMode {
                     break;
                 case GENERIC:
                     player.spigot().sendMessage(Localization.NEW_SUBCLAIM__ERROR.getMessage(player));
+                    break;
+                case VERTICAL_SUBCLAIM_TOO_SMALL:
+                    player.spigot().sendMessage(Localization.NEW_VERTICAL_SUBCLAIM__MIN_AREA.getMessage(player));
                     break;
             }
             cleanup(player.getUniqueId(), true);

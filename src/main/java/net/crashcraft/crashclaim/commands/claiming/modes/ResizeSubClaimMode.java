@@ -43,8 +43,8 @@ public class ResizeSubClaimMode implements ClaimMode {
     }
 
     private void firstClick(){
-        if (!StaticClaimLogic.isClaimBorder(subClaim.getMinX(), subClaim.getMaxX(), subClaim.getMinZ(), subClaim.getMaxZ(),
-                firstLocation.getBlockX(), firstLocation.getBlockZ())){
+        if (!StaticClaimLogic.IsSubclaimBorder(subClaim.getMinX(), subClaim.getMaxX(), subClaim.getMinZ(), subClaim.getMaxZ(), subClaim.getMinY(), subClaim.getMaxY(),
+                firstLocation.getBlockX(), firstLocation.getBlockZ(), firstLocation.getBlockY())){
             firstLocation = null;
             player.spigot().sendMessage(Localization.RESIZE_SUBCLAIM__INSTRUCTIONS.getMessage(player));
             return;
@@ -63,7 +63,6 @@ public class ResizeSubClaimMode implements ClaimMode {
                 SubClaim visualSubClaim = (SubClaim) tempClaim;
                 if (visualSubClaim.equals(subClaim)){
                     group.removeVisual(visual);
-
                     visualizationManager.getProvider(player.getUniqueId()).spawnClaimVisual(VisualColor.YELLOW, group, subClaim, visual.getY()).spawn();
                     return;
                 }
@@ -84,15 +83,14 @@ public class ResizeSubClaimMode implements ClaimMode {
             firstClick();
             return;
         }
-
-        if (!MathUtils.iskPointCollide(claim.getMinX(), claim.getMinZ(),
+        if (!MathUtils.iskPointCollide(claim.getMinX(), claim.getMinZ(), //no need for additional checks here
                 claim.getMaxX(), claim.getMaxZ(), click.getBlockX(), click.getBlockZ())){
             player.spigot().sendMessage(Localization.RESIZE_SUBCLAIM__INSIDE_PARENT.getMessage(player));
             cleanup(player.getUniqueId(), true);
             return;
         }
 
-        ErrorType error = manager.resizeSubClaim(subClaim, firstLocation.getBlockX(), firstLocation.getBlockZ(), click.getBlockX(), click.getBlockZ()); //Resize no payment here
+        ErrorType error = manager.resizeSubClaim(subClaim, firstLocation.getBlockX(), firstLocation.getBlockZ(), firstLocation.getBlockY(), click.getBlockX(), click.getBlockZ(), click.getBlockY()); //Resize no payment here
 
         switch (error){
             case OVERLAP_EXISTING_SUBCLAIM:
@@ -105,6 +103,10 @@ public class ResizeSubClaimMode implements ClaimMode {
                 return;
             case CANNOT_FLIP_ON_RESIZE:
                 player.spigot().sendMessage(Localization.RESIZE_SUBCLAIM__CANNOT_FLIP.getMessage(player));
+                cleanup(player.getUniqueId(), true);
+                return;
+            case VERTICAL_SUBCLAIM_TOO_SMALL:
+                player.spigot().sendMessage(Localization.NEW_VERTICAL_SUBCLAIM__MIN_AREA.getMessage(player));
                 cleanup(player.getUniqueId(), true);
                 return;
             case NONE:

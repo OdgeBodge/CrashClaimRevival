@@ -1,3 +1,7 @@
+new-vertical-subclaim:
+  min-area: <red>Una propiedad debe de medir por lo menos 5x5x5.
+resize-vertical-subclaim:
+  min-area: <red>Una propiedad debe de medir por lo menos 5x5x5.
 contribution-refund: <green>Recibió <gold><amount> <green>por reintegro de contibución
   a una propiedad.
 bypass:

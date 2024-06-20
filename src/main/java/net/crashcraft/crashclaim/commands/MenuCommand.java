@@ -55,7 +55,7 @@ public class MenuCommand extends BaseCommand {
     public void unSubClaim(Player player){
         Location location = player.getLocation();
         SubClaim claim = (manager.getClaim(location.getBlockX(), location.getBlockZ(), location.getWorld().getUID()) != null)
-                ? manager.getClaim(location.getBlockX(), location.getBlockZ(), location.getWorld().getUID()).getSubClaim(location.getBlockX(), location.getBlockZ()) : null;
+                ? manager.getClaim(location.getBlockX(), location.getBlockZ(), location.getWorld().getUID()).getSubClaim(location.getBlockX(), location.getBlockZ(), location.getBlockY()) : null;
         if (claim != null) {
             ItemStack message = Localization.UN_SUBCLAIM__MENU__CONFIRMATION__MESSAGE.getItem(player);
             message.setType(GlobalConfig.visual_menu_items.getOrDefault(claim.getWorld(), Material.OAK_FENCE));

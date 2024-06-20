@@ -85,7 +85,7 @@ public class PermissionRouter {
 
     public static int getLayeredContainer(GlobalPermissionSet parent, PlayerPermissionSet secondary, Material material){
         return secondary == null ? PermissionRoute.CONTAINERS.getPerm(parent, material) : processPerm(PermissionRoute.CONTAINERS.getPerm(parent, material),
-                PermissionRoute.CONTAINERS.getPerm(secondary, material));
+                PermissionRoute.CONTAINERS.getPerm(secondary, material)); //HERE ----------
 
         // return processPerm(route.getPerm(global), main == null ? PermState.NEUTRAL : route.getPerm(main));
     }

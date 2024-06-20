@@ -113,8 +113,8 @@ public class WorldListener implements Listener {
         if (GlobalConfig.disabled_worlds.contains(e.getBlock().getWorld().getUID())){
             return;
         }
-        if (e.getEntity() instanceof ArmorStand){ //allows armour stands to activate pressure plates without entity grief perm
-            return; //im not sure why the pressure plates fall under this event??
+        if (e.getEntity() instanceof ArmorStand){ //allow armour stands to activate pressure plates without entity grief perm
+            return;
         }
         if (e.getEntity() instanceof Projectile && ((Projectile) e.getEntity()).getShooter() instanceof Player player){
             Location location = e.getBlock().getLocation();

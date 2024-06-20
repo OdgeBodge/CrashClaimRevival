@@ -176,6 +176,9 @@ public enum Localization {
     NEW_SUBCLAIM__NO_OVERLAP("<red>You cannot overlap an existing sub-claim."),
     NEW_SUBCLAIM__ERROR("<red>There was an error creating the sub-claim."),
 
+    NEW_VERTICAL_SUBCLAIM__MIN_AREA("<red>A vertical sub-claim needs to be at least a 5x5x5 area."),
+    //RESIZE_VERTICAL_SUBCLAIM__MIN_AREA("<red>A vertical sub-claim needs to be at least a 5x5x5 area."),
+
     CLAIM__ENABLED("<green>Claim mode <bold>enabled!"),
     CLAIM__DISABLED("<red>Claim mode <bold>disabled!"),
 
@@ -237,6 +240,11 @@ public enum Localization {
     MENU__GENERAL__CLAIM_ITEM_NO_OWNER(null, 1,
             "<name>",
             "<green>Coordinates: <yellow><min_x>, <min_z><gold> | <yellow><max_x>, <max_z>",
+            "<green>World: <yellow><world>"),
+
+    MENU__GENERAL__VERTICAL_SUBCLAIM(null, 1,
+            "<name>",
+            "<green>Coordinates: <yellow><min_x>, <min_y>, <min_z><gold> | <yellow><max_x>, <max_y>, <max_z>",
             "<green>World: <yellow><world>"),
 
     MENU__GENERAL__CLAIM_ITEM(null, 1,

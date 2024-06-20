@@ -40,25 +40,39 @@ public class SubClaimMenu extends GUI {
     public void loadItems() {
         ItemStack descItem;
 
-        if (claim.getParent().getOwner().equals(getPlayer().getUniqueId())){
-            descItem = Localization.MENU__GENERAL__CLAIM_ITEM_NO_OWNER.getItem(player,
+        if (claim.IsVertical()){
+                descItem = Localization.MENU__GENERAL__VERTICAL_SUBCLAIM.getItem(player,
                     "name", claim.getName(),
                     "min_x", Integer.toString(claim.getMinX()),
                     "min_z", Integer.toString(claim.getMinZ()),
+                    "min_y", Integer.toString(claim.getMinY()),
                     "max_x", Integer.toString(claim.getMaxX()),
                     "max_z", Integer.toString(claim.getMaxZ()),
+                    "max_y", Integer.toString(claim.getMaxY()),
                     "world", Bukkit.getWorld(claim.getWorld()).getName()
-            );
-        } else {
-            descItem = Localization.MENU__GENERAL__CLAIM_ITEM.getItem(player,
-                    "name", claim.getName(),
-                    "min_x", Integer.toString(claim.getMinX()),
-                    "min_z", Integer.toString(claim.getMinZ()),
-                    "max_x", Integer.toString(claim.getMaxX()),
-                    "max_z", Integer.toString(claim.getMaxZ()),
-                    "world", Bukkit.getWorld(claim.getWorld()).getName(),
-                    "owner", Bukkit.getOfflinePlayer(claim.getParent().getOwner()).getName()
-            );
+                );
+            }
+            else if (claim.getParent().getOwner().equals(getPlayer().getUniqueId())) {
+                descItem = Localization.MENU__GENERAL__CLAIM_ITEM_NO_OWNER.getItem(player,
+                        "name", claim.getName(),
+                        "min_x", Integer.toString(claim.getMinX()),
+                        "min_z", Integer.toString(claim.getMinZ()),
+                        "max_x", Integer.toString(claim.getMaxX()),
+                        "max_z", Integer.toString(claim.getMaxZ()),
+                        "world", Bukkit.getWorld(claim.getWorld()).getName()
+                );
+            }
+            else {
+                descItem = Localization.MENU__GENERAL__CLAIM_ITEM.getItem(player, //im not sure in what case this would be used?
+                        "name", claim.getName(),
+                        "min_x", Integer.toString(claim.getMinX()),
+                        "min_z", Integer.toString(claim.getMinZ()),
+                        "max_x", Integer.toString(claim.getMaxX()),
+                        "max_z", Integer.toString(claim.getMaxZ()),
+                        "world", Bukkit.getWorld(claim.getWorld()).getName(),
+                        "owner", Bukkit.getOfflinePlayer(claim.getParent().getOwner()).getName()
+                );
+
         }
 
         descItem.setType(Material.PAPER);
