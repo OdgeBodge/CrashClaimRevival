@@ -1,6 +1,8 @@
 ![](https://i.imgur.com/g5rKXNp.png)
 [Discord](https://discord.gg/6FU9eCjcrA) | [SpigotMC](https://www.spigotmc.org/resources/crashclaim-claiming-plugin.94037/)
 ***
+This fork includes many improvements over the base plugin including many permission fixes and the ability to create vertically sized subclaims
+
 CrashClaim is a claiming plugin oriented towards improving the claiming experience for survival servers wanting a clean, comprehensive system for their players. 
 
 The latest downloads can be found on our SpigotMC page [here]().
