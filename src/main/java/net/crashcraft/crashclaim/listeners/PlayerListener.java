@@ -15,12 +15,14 @@ import net.crashcraft.crashclaim.permissions.PermissionSetup;
 import net.crashcraft.crashclaim.visualize.VisualizationManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+
+import io.github.rypofalem.armorstandeditor.api.*;
+
 import org.bukkit.Material;
 import org.bukkit.World;
-import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
-import org.bukkit.block.Container;
+import org.bukkit.block.*;
 import org.bukkit.block.data.Waterlogged;
+import org.bukkit.block.data.type.Candle;
 import org.bukkit.block.data.type.Dispenser;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
@@ -41,18 +43,11 @@ import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.hanging.HangingBreakByEntityEvent;
 import org.bukkit.event.hanging.HangingBreakEvent;
 import org.bukkit.event.hanging.HangingPlaceEvent;
-import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
-import org.bukkit.event.player.PlayerBucketEmptyEvent;
-import org.bukkit.event.player.PlayerBucketFillEvent;
-import org.bukkit.event.player.PlayerInteractEntityEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.event.player.PlayerPickupArrowEvent;
-import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.event.vehicle.VehicleDamageEvent;
 import org.bukkit.inventory.BlockInventoryHolder;
-import org.bukkit.block.Sign;
+
+
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.material.PressureSensor;
 
@@ -61,7 +56,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-public class PlayerListener implements Listener {
+public class PlayerListener implements Listener{
     private final PermissionHelper helper;
     private final PermissionSetup perms;
     private final VisualizationManager visuals;
@@ -98,7 +93,6 @@ public class PlayerListener implements Listener {
             }
         }
     }
-
 
     @EventHandler (priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onPlayerJoinEvent(PlayerJoinEvent e){
@@ -137,14 +131,19 @@ public class PlayerListener implements Listener {
         }
     }
 
-
     @EventHandler (priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onPlayerInteractEvent(PlayerInteractEvent e){
-        if (e.getClickedBlock() == null)
+
+
+        if (e.getClickedBlock() == null){
             return;
+        }
+
 
         Player player = e.getPlayer();
         Location location = e.getClickedBlock().getLocation();
+
+
 
         if (GlobalConfig.disabled_worlds.contains(location.getWorld().getUID())){
             return;
@@ -157,7 +156,7 @@ public class PlayerListener implements Listener {
         //add some exceptions to the interaction flag and put them under build instead
 
         List<Material> InteractExceptions = Arrays.asList(Material.REPEATER, Material.COMPARATOR, Material.ARMOR_STAND, Material.END_CRYSTAL);
-        if (e.getClickedBlock().getState() instanceof Sign || InteractExceptions.contains(e.getClickedBlock().getType())){
+        if (e.getClickedBlock().getState() instanceof Sign || InteractExceptions.contains(e.getClickedBlock().getType()) || e.getClickedBlock().getState() instanceof Candle){
             if (!helper.hasPermission(player.getUniqueId(), location, PermissionRoute.BUILD)){
                 e.setCancelled(true);
                 visuals.sendAlert(player, Localization.ALERT__NO_PERMISSIONS__BUILD.getMessage(player));
@@ -438,6 +437,7 @@ public class PlayerListener implements Listener {
 
         // Handle pvp inside claims
         if (e.getEntity() instanceof Player player){
+
             if (!GlobalConfig.blockPvPInsideClaims){
                 return;
             }
@@ -472,11 +472,11 @@ public class PlayerListener implements Listener {
             return;
         }
 
-        List<EntityType> DamageExceptions = Arrays.asList(EntityType.ARMOR_STAND, EntityType.ENDER_CRYSTAL, EntityType.LEASH_HITCH, EntityType.ITEM_FRAME, EntityType.GLOW_ITEM_FRAME, EntityType.PAINTING);
+        List<EntityType> DamageExceptions = Arrays.asList(EntityType.ARMOR_STAND, EntityType.END_CRYSTAL, EntityType.LEASH_KNOT, EntityType.ITEM_FRAME, EntityType.GLOW_ITEM_FRAME, EntityType.PAINTING);
         if (e.getDamager() instanceof Projectile arrow){
             Location location = arrow.getLocation();
             if (arrow.getShooter() instanceof Player player){
-                if (DamageExceptions.contains(e.getEntity().getType())){
+                if (DamageExceptions.contains(e.getEntity().getType()) || e.getEntity() instanceof DecoratedPot){
                     if (!helper.hasPermission(player.getUniqueId(), e.getEntity().getLocation(), PermissionRoute.BUILD)){
                         e.setCancelled(true); //prevent users from breaking placed entities with projectiles if they do not have build perms
                         visuals.sendAlert(player, Localization.ALERT__NO_PERMISSIONS__BUILD.getMessage(player));
@@ -638,11 +638,12 @@ public class PlayerListener implements Listener {
             return;
         }
 
+
         List<EntityType> EntityItemContainers = Arrays.asList(
-                EntityType.MINECART_CHEST,
+                EntityType.CHEST_MINECART,
                 EntityType.CHEST_BOAT,
-                EntityType.MINECART_HOPPER,
-                EntityType.MINECART_FURNACE
+                EntityType.HOPPER_MINECART,
+                EntityType.FURNACE_MINECART
         );
 
         if (e.getRightClicked().getType().equals(EntityType.ITEM_FRAME) || e.getRightClicked().getType().equals(EntityType.GLOW_ITEM_FRAME)){

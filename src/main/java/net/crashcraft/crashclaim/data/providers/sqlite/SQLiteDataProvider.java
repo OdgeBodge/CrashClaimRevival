@@ -445,6 +445,11 @@ public class SQLiteDataProvider implements DataProvider {
                             "Where" +
                             "    claims.id = ?", id);
 
+
+            if (claimDataRow.isEmpty()){
+                return null;
+            }
+
             Integer data_id = claimDataRow.getInt("id");
             UUID owner = UUID.fromString(claimDataRow.getString("uuid"));
 

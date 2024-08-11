@@ -12,15 +12,13 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
+import org.bukkit.block.DecoratedPot;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockExplodeEvent;
-import org.bukkit.event.entity.EntityChangeBlockEvent;
-import org.bukkit.event.entity.EntityExplodeEvent;
-import org.bukkit.event.entity.EntityInteractEvent;
-import org.bukkit.event.entity.SheepRegrowWoolEvent;
+import org.bukkit.event.entity.*;
 import org.bukkit.event.world.StructureGrowEvent;
 
 import java.util.*;
@@ -135,6 +133,19 @@ public class WorldListener implements Listener {
             }
         }
     }
+    @EventHandler (priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void onCreatureSpawnEvent(CreatureSpawnEvent e){
+        Location location = e.getLocation();
+        Entity entity = e.getEntity();
+        CreatureSpawnEvent.SpawnReason spawnReason = e.getSpawnReason();
+
+        if (spawnReason != CreatureSpawnEvent.SpawnReason.NATURAL){
+            return;
+        }
+        if (!helper.hasPermission(location, PermissionRoute.PISTONS)); //todo
+    }
+
+
 
     @EventHandler (priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onEntityChangeBlockEvent(EntityChangeBlockEvent e) {
@@ -144,6 +155,10 @@ public class WorldListener implements Listener {
 
         Location location = e.getBlock().getLocation();
 
+        if (e.getEntity() instanceof Bee){
+            return;
+        }
+
         if (e.getEntity() instanceof Player) {
             if (!helper.hasPermission(e.getEntity().getUniqueId(), location, PermissionRoute.INTERACTIONS)) {
                 e.setCancelled(true);
@@ -152,6 +167,13 @@ public class WorldListener implements Listener {
             }
         } else {
             if (e.getEntity() instanceof Arrow && ((Arrow) e.getEntity()).getShooter() instanceof Player player) {
+                if (e.getBlock().getType().equals(Material.DECORATED_POT)){
+                    if (!helper.hasPermission(e.getEntity().getUniqueId(), location, PermissionRoute.BUILD)) {
+                        e.setCancelled(true);
+                        visuals.sendAlert(player, Localization.ALERT__NO_PERMISSIONS__BUILD.getMessage(player));
+                        return;
+                    }
+                }
                 if (e.getBlock().getType().equals(Material.TNT)
                         && !helper.hasPermission(player.getUniqueId(), location, PermissionRoute.INTERACTIONS)){
                     e.setCancelled(true);

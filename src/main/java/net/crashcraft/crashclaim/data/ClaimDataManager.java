@@ -7,6 +7,7 @@ import net.crashcraft.crashclaim.claimobjects.PermissionGroup;
 import net.crashcraft.crashclaim.claimobjects.SubClaim;
 import net.crashcraft.crashclaim.claimobjects.permission.child.SubPermissionGroup;
 import net.crashcraft.crashclaim.claimobjects.permission.parent.ParentPermissionGroup;
+import net.crashcraft.crashclaim.commands.claiming.ClaimCommand;
 import net.crashcraft.crashclaim.commands.claiming.ClaimMode;
 import net.crashcraft.crashclaim.commands.claiming.ClickState;
 import net.crashcraft.crashclaim.config.GlobalConfig;
@@ -296,6 +297,7 @@ public class ClaimDataManager implements Listener {
         int newMaxY = arr[5];
 
 
+
         if (isToSmallVertical(newMaxX, newMaxZ, newMaxY, newMinX, newMinZ, newMinY)){
             return ErrorType.VERTICAL_SUBCLAIM_TOO_SMALL;
         }
@@ -334,6 +336,39 @@ public class ClaimDataManager implements Listener {
             subClaim.setEditing(false);
             return ErrorType.CANNOT_FLIP_ON_RESIZE;
         }
+    }
+
+
+    public ErrorType SetVerticalSize(SubClaim subClaim, int minY, int maxY){
+
+        if (isToSmallVertical(subClaim.getMaxX(), subClaim.getMaxZ(), maxY, subClaim.getMinX(), subClaim.getMinZ(), minY)){
+            return ErrorType.VERTICAL_SUBCLAIM_TOO_SMALL;
+        }
+
+        for (SubClaim tempClaim : subClaim.getParent().getSubClaims()){
+            if (tempClaim.equals(subClaim)){
+                continue;
+            }
+
+            if (tempClaim.IsVertical()){ //already established that subClaim.isVertical == true
+                if (MathUtils.doOverlapCuboid(tempClaim.getMinX(), tempClaim.getMinY(), tempClaim.getMinZ(), tempClaim.getMaxX(),
+                        tempClaim.getMaxY(), tempClaim.getMaxZ(), subClaim.getMinX(), minY, subClaim.getMinZ(), subClaim.getMaxX(), maxY, subClaim.getMaxZ())){
+                    return ErrorType.OVERLAP_EXISTING_SUBCLAIM;
+                }
+            }
+            else if (MathUtils.doOverlap(tempClaim.getMinX(), tempClaim.getMinZ(), tempClaim.getMaxX(), tempClaim.getMaxZ(),
+                    subClaim.getMinX(), subClaim.getMinZ(), subClaim.getMaxX(), subClaim.getMaxZ())){
+                return ErrorType.OVERLAP_EXISTING_SUBCLAIM;
+            }
+        }
+
+
+
+        subClaim.SetMinCornerY(minY);
+        subClaim.SetMaxCornerY(maxY);
+        subClaim.setEditing(false);
+        return ErrorType.NONE;
+
     }
 
 
@@ -460,7 +495,6 @@ public class ClaimDataManager implements Listener {
         if(Start_y == max_y){
 
             newMax_y = End_y;
-
         }
 
         if (newMax_x > min_x && newMin_x < max_x && newMax_z > min_z && newMin_z < max_z && newMax_y > min_y && newMin_y < max_y) {
@@ -526,6 +560,9 @@ public class ClaimDataManager implements Listener {
         }
 
         for (Claim claim : claims){
+            if (claim.isDeleted()){
+                continue;
+            }
             if (MathUtils.doOverlap(minX, minZ, maxX, maxZ,
                     claim.getMinX(), claim.getMinZ(), claim.getMaxX(), claim.getMaxZ())){
                 return true;
@@ -651,6 +688,7 @@ public class ClaimDataManager implements Listener {
         if (claim.isDeleted()){
             return new ClaimResponse(false, ErrorType.GENERIC);
         }
+
 
         if (!MathUtils.containedInside(claim.getMinX(), claim.getMinZ(), claim.getMaxX(), claim.getMaxZ(),
                 loc1.getBlockX(), loc1.getBlockZ(), loc2.getBlockX(), loc2.getBlockZ())){
@@ -819,9 +857,10 @@ public class ClaimDataManager implements Listener {
         for (Integer id : integers){
             Claim claim = getClaim(id);
 
-            if (x >= claim.getMinX() && x <= claim.getMaxX()
-                    && z >= claim.getMinZ() && z <= claim.getMaxZ()){
-                return claim;
+            if (x >= claim.getMinX() && x <= claim.getMaxX() && z >= claim.getMinZ() && z <= claim.getMaxZ()){
+                if (!claim.isDeleted()){
+                    return claim;
+                }
             }
         }
         return null;

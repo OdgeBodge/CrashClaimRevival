@@ -79,7 +79,7 @@ public class CrashClaim extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        if (!isServerSupported("1.20.4") && !isServerSupported("1.20.6")){
+        if (!isServerSupported("1.20.4") && !isServerSupported("1.20.6") && !isServerSupported("1.21")){
             getServer().getPluginManager().disablePlugin(this);
             return;
         }

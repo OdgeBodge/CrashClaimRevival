@@ -233,6 +233,23 @@ public enum Localization {
     ALERT__NO_PERMISSIONS__TELEPORT("<red>You do not have permission to teleport to that claim."),
     ALERT__NO_PERMISSIONS__TELEPORT_RELOCATE("<red>You do not have permission to teleport to that claim. You have been relocated outside of it."),
 
+    //Subclaim Trust
+    SUBCLAIMTRUST__SPECIFY_PLAYER("<red>You must specify a player to trust"),
+    SUBCLAIMTRUST__INVALID_PLAYER("<red>Specified player does not exist"),
+    SUBCLAIMTRUST__NOT_IN_SUBCLAIM("<red>You must be stood in a subclaim to use this command"),
+    SUBCLAIMTRUST__TARGET_IS_CLAIM_OWNER("<red>You may not modify the permissions of the claim owner"),
+    SUBCLAIMTRUST__NO_PERMISSION("<red>You do not have permission to modify this subclaim"),
+
+    //vsc resize command
+    VSUBCLAIMRESIZE__YTOOBIG("<red>The Max Y value cannot exceed 320"),
+    VSUBCLAIMRESIZE__YTOOSMALL("<red>The Min Y value cannot subceed -64"),
+    VSUBCLAIMRESIZE__NOPARAMS("<red>You must specify the minimum and maximum Y values"),
+    VSUBCLAIMRESIZE__BADPARAMS("<red>Parameters must be numbers"),
+    VSUBCLAIMRESIZE__MINMAXINVERTED("<red>The minimum Y value must be smaller than the maximum"),
+    VSUBCLAIMRESIZE__TOOSMALL("<red>The subclaim must be at least 5 blocks tall"),
+    VSUBCLAIMRESIZE__SUCCESS("<red>Subclaim resized successfully"),
+
+
     // General Visuals
 
     MENU__GENERAL__INSUFFICIENT_PERMISSION("<red>You no longer have sufficient permissions to continue"),
@@ -351,6 +368,7 @@ public enum Localization {
     MENU__PERMISSIONS_TOGGLES__DISABLE__SELECTED(Material.RED_CONCRETE, 1, "<red>Disabled"),
     MENU__PERMISSIONS_TOGGLES__DISABLE__SELECTED_DISABLED(Material.GRAY_CONCRETE, 1, "<gray>Disabled"),
     MENU__PERMISSIONS_TOGGLES__DISABLE__OVERRODE(Material.YELLOW_STAINED_GLASS_PANE, 1, "<yellow>Disabled"),
+
 
     // Routes
 

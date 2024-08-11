@@ -25,14 +25,16 @@ public class NewSubClaimMode implements ClaimMode {
     private final ClaimDataManager manager;
     private final Claim claim;
     private final ClickState mode;
+    private final ClaimCommand.VerticalSubclaimParams params;
 
-    public NewSubClaimMode(ClaimCommand commandManager, Player player, Claim claim, Location firstLocation, ClickState Mode) {
+    public NewSubClaimMode(ClaimCommand commandManager, Player player, Claim claim, Location firstLocation, ClickState Mode, ClaimCommand.VerticalSubclaimParams params) {
         this.commandManager = commandManager;
         this.claim = claim;
         this.firstLocation = firstLocation;
         this.visualizationManager = commandManager.getVisualizationManager();
         this.manager = commandManager.getDataManager();
         this.mode = Mode;
+        this.params = params;
 
         VisualGroup group = visualizationManager.fetchVisualGroup(player, true);
         group.removeAllVisualsOfType(VisualType.MARKER);
@@ -44,13 +46,22 @@ public class NewSubClaimMode implements ClaimMode {
 
     @Override
     public void click(Player player, Location click) {
+
+
+        if (params != null){
+            firstLocation.setY(params.minY);
+            click.setY(params.maxY);
+
+        }
+
+
+
         if (!MathUtils.iskPointCollide(claim.getMinX(), claim.getMinZ(),
                 claim.getMaxX(), claim.getMaxZ(), click.getBlockX(), click.getBlockZ())){
             player.spigot().sendMessage(Localization.NEW_SUBCLAIM__NOT_INSIDE_PARENT.getMessage(player));
             cleanup(player.getUniqueId(), true);
             return;
         }
-
 
         ClaimResponse response = manager.createSubClaim(claim, firstLocation, click, player.getUniqueId(), this.mode); //CREATING SUBCLAIM
 

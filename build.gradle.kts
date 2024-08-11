@@ -4,6 +4,8 @@ plugins {
     id("io.github.goooler.shadow") version "8.1.7"
 }
 
+
+
 repositories {
     mavenLocal()
     maven("https://repo.codemc.io/repository/maven-public/")
@@ -22,26 +24,33 @@ repositories {
     maven("https://repo.mikeprimm.com/")
     maven("https://repo.maven.apache.org/maven2/")
     maven("https://repo.codemc.io/repository/maven-releases/")
+    maven("https://github.com/")
 
     maven {
         url = uri("https://repo.papermc.io/repository/maven-public/")
+        url = uri("https://jitpack.io")
     }
 
     mavenCentral()
+
+
+
 }
+
+
 
 dependencies {
     // Paper
-    compileOnly("io.papermc.paper:paper-api:1.20.6-R0.1-SNAPSHOT")
+    compileOnly("io.papermc.paper:paper-api:1.21-R0.1-SNAPSHOT")
 
     // Adventure
     compileOnly("net.kyori:adventure-api:4.17.0")
-    implementation("net.kyori:adventure-platform-bukkit:4.3.2")
+    implementation("net.kyori:adventure-platform-bukkit:4.3.3")
     compileOnly("net.kyori:adventure-text-minimessage:4.17.0")
 
     // Other
     implementation("co.aikar:taskchain-bukkit:3.7.2")
-    implementation("net.wesjd:anvilgui:1.9.4-SNAPSHOT")
+    implementation("net.wesjd:anvilgui:1.10.0-SNAPSHOT")
     implementation("co.aikar:fastutil-base:3.0-SNAPSHOT")
     implementation("co.aikar:fastutil-longbase:3.0-SNAPSHOT")
     implementation("co.aikar:fastutil-longhashmap:3.0-SNAPSHOT")
@@ -49,7 +58,9 @@ dependencies {
     implementation("io.papermc:paperlib:1.0.7")
     implementation("co.aikar:idb-core:1.0.0-SNAPSHOT")
     implementation("com.zaxxer:HikariCP:5.1.0")
-    implementation("com.github.retrooper.packetevents:spigot:2.3.0")
+    //implementation("com.github.retrooper.packetevents:spigot:2.4.0")
+    implementation(files("libs/packetevents-spigot-2.4.0.jar"))
+    implementation(files("libs/armorstandeditor-1.20.6-46.1.jar"))
     implementation("org.bstats:bstats-bukkit:3.0.2")
     compileOnly("com.github.N0RSKA:DeluxeSellwandsAPI:32c")
     compileOnly("com.ghostchu:quickshop-api:5.2.0.8")
@@ -62,6 +73,7 @@ dependencies {
     compileOnly("net.luckperms:api:5.4")
     compileOnly("com.google.auto.service:auto-service:1.1.1")
     annotationProcessor("com.google.auto.service:auto-service:1.1.1")
+
 
     // Cache2k
     val cache2kVersion = "1.2.2.Final"
@@ -127,3 +139,4 @@ publishing {
 tasks.withType<JavaCompile> {
     options.encoding = "UTF-8"
 }
+

@@ -11,6 +11,7 @@ import org.bukkit.inventory.BlockInventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
 
+import java.io.Console;
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -34,8 +35,10 @@ public class PermissionSetup {
         heldItemInteraction = new ArrayList<>();
 
         for (Material material : Material.values()){
+            if (!material.isItem()){
+                continue;
+            }
             ItemStack stack = new ItemStack(material);
-
             if (stack.getItemMeta() instanceof BlockStateMeta) {
                 BlockStateMeta meta = (BlockStateMeta) stack.getItemMeta();
 
